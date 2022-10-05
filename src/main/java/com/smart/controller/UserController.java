@@ -324,32 +324,4 @@ public class UserController {
 		return "redirect:/user/index";
 	}
 
-	
-	//creating order for payment
-	
-	@PostMapping("/create_order")
-	@ResponseBody
-	public String createOrder(@RequestBody Map<String, Object> data) throws Exception
-	{
-		//System.out.println("Hey order function ex.");
-		System.out.println(data);
-		
-		int amt=Integer.parseInt(data.get("amount").toString());
-		
-		var client=new RazorpayClient("rzp_test_haDRsJIQo9vFPJ", "owKJJes2fwE6YD6DToishFuH");
-		
-		JSONObject ob=new JSONObject();
-		ob.put("amount", amt*100);
-		ob.put("currency", "INR");
-		ob.put("receipt", "txn_235425");
-		
-		//creating new order
-		
-		Order order = client.Orders.create(ob);
-		System.out.println(order);
-		
-		//if you want you can save this to your data..		
-		return order.toString();
-	}
-
 }
