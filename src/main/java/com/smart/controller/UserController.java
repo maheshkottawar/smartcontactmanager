@@ -63,19 +63,7 @@ public class UserController {
 
 	
 
-	// method for adding common data to response
-	@ModelAttribute
-	public void addCommonData(Model model, Principal principal) {
-		String userName = principal.getName();
-		System.out.println("USERNAME " + userName);
 
-		// get the user using usernamne(Email)
-
-		User user = userRepository.getUserByUserName(userName);
-		System.out.println("USER " + user);
-		model.addAttribute("user", user);
-
-	}
 
 	// dashboard home
 	@RequestMapping("/index")
