@@ -1,0 +1,109 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define any environment variables you might need
+        APP_NAME = 'my-application'
+        DOCKER_IMAGE = 'my-docker-image'
+        DOCKER_REGISTRY = 'my-docker-registry'
+        SONAR_PROJECT_KEY = 'my-sonar-project-key'
+        SONAR_HOST_URL = 'http://my-sonar-server'
+        SONAR_LOGIN = 'my-sonar-login-token'
+        FORTIFY_API_TOKEN = 'my-fortify-api-token'
+        WHITESOURCE_PROJECT_NAME = 'my-whitesource-project'
+        WHITESOURCE_API_KEY = 'my-whitesource-api-key'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the repository
+                git url: 'https://github.com/your-repo/your-project.git', branch: 'main'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                // Run the build script
+                sh './build.sh'
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh "sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_LOGIN}"
+                }
+            }
+        }
+
+        stage('Fortify Scan') {
+            steps {
+                // Run Fortify scan
+                sh '''
+                sourceanalyzer -b ${APP_NAME} -clean
+                sourceanalyzer -b ${APP_NAME} -scan -f ${APP_NAME}.fpr
+                fortifyclient uploadFPR -file ${APP_NAME}.fpr -project "${APP_NAME}" -version "${BUILD_ID}" -url "https://my-fortify-server" -authtoken "${FORTIFY_API_TOKEN}"
+                '''
+            }
+        }
+
+        stage('WhiteSource Scan') {
+            steps {
+                // Run WhiteSource scan
+                sh '''
+                whitesource run -c whitesource.config -apiKey ${WHITESOURCE_API_KEY} -project ${WHITESOURCE_PROJECT_NAME}
+                '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Run the test script
+                sh './test.sh'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    // Build the Docker image
+                    docker.build("${DOCKER_IMAGE}:${env.BUILD_ID}")
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                script {
+                    // Push the Docker image to the registry
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials-id') {
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                // Deploy the application
+                sh './deploy.sh'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up workspace after build
+            cleanWs()
+        }
+        success {
+            // Notify on success
+            echo 'Build and deployment successful!'
+        }
+        failure {
+            // Notify on failure
+            echo 'Build or deployment failed.'
+        }
+    }
+}
