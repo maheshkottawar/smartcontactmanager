@@ -1,3 +1,4 @@
 ## Custom Properties
-- owner: mahesh
-- manager: xyz
+- portfolio_name: CI
+- project_name: CYBER
+- team_name: Mantra
