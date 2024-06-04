@@ -68,18 +68,8 @@ pipeline {
         stage('Nexus Stage') {
             steps {
                 script {
-                    def server = Artifactory.server 'nexus'
-                    def uploadSpec = """{
-                        "files": 
-         [
-                            {
-                                "pattern": "path/to/artifact",
-                                "target": "repository-name/"
-                            }
-                        ]
-                    }"""
-                    server.upload(uploadSpec)
-                }
+                   sh "mvn deploy:deploy-file -X"
+                ]
             }
         }
         
