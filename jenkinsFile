@@ -63,7 +63,27 @@ pipeline {
                 sh './test.sh'
             }
         }
-
+        
+               
+        stage('Nexus Stage') {
+            steps {
+                script {
+                    def server = Artifactory.server 'nexus'
+                    def uploadSpec = """{
+                        "files": 
+         [
+                            {
+                                "pattern": "path/to/artifact",
+                                "target": "repository-name/"
+                            }
+                        ]
+                    }"""
+                    server.upload(uploadSpec)
+                }
+            }
+        }
+        
+        
         stage('Docker Build') {
             steps {
                 script {
